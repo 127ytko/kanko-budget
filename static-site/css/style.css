@@ -549,9 +549,10 @@ th {
 /* 設定ページのテーブル列幅 */
 th:nth-child(1),
 td:nth-child(1) {
-    width: 15%;
+    width: 20%;
     padding-left: 10px;
     /* 標準的なパディングに戻す */
+    white-space: nowrap;
 }
 
 th:nth-child(2),
