@@ -382,20 +382,35 @@ def scrape_budget_pages(municipality: dict, max_depth: int = 3) -> list:
                 if href.lower().endswith('.pdf'):
                     continue
                 
-                # 予算関連かつ対象年度のページを発見
-                if is_budget_related(text) and is_target_year(text):
+                # 予算関連かつ対象年度のページを発見（保存対象）
+                is_budget = is_budget_related(text)
+                is_year = is_target_year(text)
+                
+                if is_budget and is_year:
                     if full_url not in found_page_urls and full_url not in visited:
-                        logger.info(f"  📄 予算ページ発見: {text} -> {full_url}")
+                        logger.info(f"  📄 予算ページ発見(Keyword+Year): {text} -> {full_url}")
                         found_page_urls.add(full_url)
                         
                         # このページの詳細情報を取得
                         page_info = get_page_details(full_url, municipality['base_url'])
                         if page_info:
-                            budget_pages.append(page_info)
+                            # [追加] ページタイトル自体にも予算キーワードが含まれているか最終確認
+                            # リンクテキストだけでなく、実際のページタイトルで判定することで精度を高める
+                            if is_budget_related(page_info['title']):
+                                budget_pages.append(page_info)
+                            else:
+                                logger.info(f"    × タイトルに予算キーワードなし、除外: {page_info['title']}")
                 
-                # サブページとして探索（予算関連キーワードを含む場合）
-                elif is_budget_related(text) and full_url not in visited:
+                # サブページとして探索（予算関連キーワード OR 年度関連）
+                # 京丹後市などのように「令和7年度」だけのリンクを辿る必要がある
+                elif (is_budget or is_year) and full_url not in visited:
                     urls_to_visit.append((full_url, depth + 1))
+            
+            # --- ページ内PDFチェックによる救済措置 ---
+            # もしこのページ自体が対象ページかもしれない場合（探索過程で訪れたページ）
+            # ページタイトルを取得して再判定すると精度が上がるが、ここでは簡易的に
+            # 「PDFを含んでいて、URLやタイトルに年度が含まれる」なら保存するロジックを追加検討
+            # 現状はリンク探索時の判定のみで進める
             
             time.sleep(1)
             
