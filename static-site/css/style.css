@@ -1,0 +1,622 @@
+:root {
+    --primary: #4DB6E8;
+    --primary-dark: #3A9BD4;
+    --text-main: #333;
+    --text-sub: #666;
+    --border: #E0E0E0;
+    --bg-light: #F7F9FC;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+/* Header */
+.header {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.nav-links {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary);
+}
+
+/* Main Container */
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Filter Bar */
+.filter-bar {
+    margin-bottom: 20px;
+}
+
+.filter-section {
+    margin-bottom: 16px;
+}
+
+.filter-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chip {
+    padding: 6px 14px;
+    border: 1px solid #E0E0E0;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.filter-chip.active {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Prefecture Colors */
+.filter-chip[data-filter="滋賀県"].active {
+    background-color: #0077B6;
+    border-color: #0077B6;
+}
+
+.filter-chip[data-filter="滋賀県"]:hover {
+    color: #0077B6;
+    border-color: #0077B6;
+}
+
+.filter-chip[data-filter="京都府"].active {
+    background-color: #7B2D8E;
+    border-color: #7B2D8E;
+}
+
+.filter-chip[data-filter="京都府"]:hover {
+    color: #7B2D8E;
+    border-color: #7B2D8E;
+}
+
+.filter-chip[data-filter="大阪府"].active {
+    background-color: #005BAC;
+    border-color: #005BAC;
+}
+
+.filter-chip[data-filter="大阪府"]:hover {
+    color: #005BAC;
+    border-color: #005BAC;
+}
+
+.filter-chip[data-filter="兵庫県"].active {
+    background-color: #00873C;
+    border-color: #00873C;
+}
+
+.filter-chip[data-filter="兵庫県"]:hover {
+    color: #00873C;
+    border-color: #00873C;
+}
+
+.filter-chip[data-filter="奈良県"].active {
+    background-color: #8B2332;
+    border-color: #8B2332;
+}
+
+.filter-chip[data-filter="奈良県"]:hover {
+    color: #8B2332;
+    border-color: #8B2332;
+}
+
+.filter-chip[data-filter="和歌山県"].active {
+    background-color: #F08300;
+    border-color: #F08300;
+}
+
+.filter-chip[data-filter="和歌山県"]:hover {
+    color: #F08300;
+    border-color: #F08300;
+}
+
+/* Municipality Dropdown */
+.municipality-dropdown {
+    padding: 6px 12px;
+    border: 1px solid #E0E0E0;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    background-color: white;
+    cursor: pointer;
+    outline: none;
+    min-width: 140px;
+}
+
+.municipality-dropdown:focus {
+    border-color: var(--primary);
+}
+
+.municipality-dropdown:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* List Header */
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.last-updated {
+    font-size: 0.8rem;
+    color: var(--text-sub);
+}
+
+.favorite-toggle {
+    display: flex;
+    gap: 8px;
+}
+
+/* List Container */
+.list-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.list-item {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    /* パディング少し調整 */
+    border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s;
+    position: relative;
+    /* バッジの基準位置 */
+    overflow: hidden;
+    /* はみ出しを隠す（リボン用） */
+}
+
+.list-item:hover {
+    background-color: #FAFAFA;
+}
+
+/* NEWバッジ（右上斜めリボン） */
+.new-badge {
+    position: absolute;
+    top: 12px;
+    right: -35px;
+    transform: rotate(45deg);
+    background-color: #E60012;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: 700;
+    width: 120px;
+    padding: 2px 0;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    line-height: normal;
+    letter-spacing: 0.5px;
+}
+
+.item-row-1 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.item-date {
+    /* 固定幅をやめて可変幅に、マージンで区切る */
+    flex-shrink: 0;
+    color: var(--text-main);
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-right: 16px;
+}
+
+.new-badge {
+    display: inline-block;
+    background-color: #E60012;
+    /* 鮮やかな赤 */
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+    animation: pulse 2s infinite;
+    /* 少し目立たせる */
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.item-municipality {
+    min-width: 80px;
+    width: auto;
+    display: inline-block;
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background-color: #4DB6E8;
+    color: white;
+    margin-right: 16px;
+    white-space: nowrap;
+}
+
+/* Prefecture Badge Colors */
+.item-municipality.pref-shiga {
+    background-color: #0077B6;
+}
+
+.item-municipality.pref-kyoto {
+    background-color: #7B2D8E;
+}
+
+.item-municipality.pref-osaka {
+    background-color: #005BAC;
+}
+
+.item-municipality.pref-hyogo {
+    background-color: #00873C;
+}
+
+.item-municipality.pref-nara {
+    background-color: #8B2332;
+}
+
+.item-municipality.pref-wakayama {
+    background-color: #F08300;
+}
+
+.item-title {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-main);
+    font-weight: 500;
+    line-height: 1.5;
+    margin-right: 40px;
+    /* NEWバッジや右端との余白確保（リボンが重ならないように） */
+}
+
+.item-row-2 {
+    display: flex;
+    align-items: center;
+    /* 垂直中央揃え */
+    justify-content: space-between;
+    /* タグとアクションを左右端に */
+    margin-top: 8px;
+    /* 1行目との間隔 */
+}
+
+.item-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    /* 右寄せ */
+    flex-shrink: 0;
+}
+
+.favorite-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #DDD;
+    transition: all 0.2s;
+}
+
+.favorite-btn:hover,
+.favorite-btn.active {
+    color: #F59E0B;
+}
+
+.favorite-icon {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.arrow-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #4DB6E8;
+    border-radius: 50%;
+    color: #4DB6E8;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.arrow-btn:hover {
+    background-color: #4DB6E8;
+    color: white;
+}
+
+.arrow-icon {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+}
+
+.item-row-2 {
+    display: flex;
+    align-items: center;
+    padding-left: 186px;
+}
+
+.item-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tag {
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    background-color: #8B5CF6;
+    color: white;
+}
+
+.tag.no-keyword {
+    background-color: #E5E7EB;
+    color: #6B7280;
+}
+
+.no-data {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-sub);
+}
+
+/* Settings Page */
+.settings-section {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.settings-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-main);
+}
+
+.form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    width: 100px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.form-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.btn-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-danger {
+    background-color: #EF4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #DC2626;
+}
+
+/* Table */
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+th {
+    background-color: #F9FAFB;
+    font-weight: 600;
+    color: var(--text-sub);
+}
+
+/* 設定ページのテーブル列幅 */
+/* 設定ページのテーブル列幅 */
+th:nth-child(1),
+td:nth-child(1) {
+    width: 15%;
+    padding-left: 10px;
+    /* 標準的なパディングに戻す */
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+    width: 60%;
+    /* さらに広げる */
+    padding-left: 60px;
+    /* URLの開始位置をさらに右へ */
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+    width: 10%;
+    text-align: center;
+    padding: 10px 4px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+    width: 15%;
+    text-align: left;
+    /* 左寄せにして状態アイコンの直後に配置 */
+    padding-left: 10px;
+    /* 状態との間隔を少し空ける */
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-success {
+    background-color: #D1FAE5;
+    color: #059669;
+}
+
+.status-error {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 40px;
+}
+
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

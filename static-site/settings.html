@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>観光予算モニタリング - 設定</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="canonical" href="https://kanko-budget.vercel.app/settings.html">
+    <meta property="og:url" content="https://kanko-budget.vercel.app/settings.html">
+    <style>
+        /* ローディングスピナーのスタイル */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3B82F6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .status-success {
+            background-color: #10B981;
+        }
+
+        .status-error {
+            background-color: #EF4444;
+        }
+
+        .status-pending {
+            background-color: #F59E0B;
+        }
+
+        .status-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* 確認モーダル */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1F2937;
+        }
+
+        .modal-message {
+            font-size: 0.95rem;
+            color: #6B7280;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+        }
+
+        .modal-btn-cancel {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+        .modal-btn-confirm {
+            background: #EF4444;
+            color: white;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 確認モーダル -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title">削除の確認</div>
+            <div class="modal-message" id="modal-message">この自治体を削除しますか？</div>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">キャンセル</button>
+                <button class="modal-btn modal-btn-confirm" id="modal-confirm-btn">削除する</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="header">
+        <span class="brand">観光予算モニタリング</span>
+        <nav class="nav-links">
+            <a href="index.html">新着一覧</a>
+            <a href="settings.html" class="active">設定</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <!-- 自治体登録フォーム -->
+        <div class="settings-section">
+            <h2 class="settings-title">自治体を登録</h2>
+            <form id="add-form">
+                <div class="form-group">
+                    <label for="municipality-name">自治体名</label>
+                    <input type="text" id="municipality-name" placeholder="例: 大津市" required>
+                </div>
+                <div class="form-group">
+                    <label for="target-url">URL</label>
+                    <input type="url" id="target-url" placeholder="https://..." required>
+                </div>
+                <div class="btn-container">
+                    <button type="submit" class="btn btn-primary">登録する</button>
+                </div>
+            </form>
+            <p id="form-message" style="margin-top: 12px; font-size: 0.85rem;"></p>
+        </div>
+
+        <!-- 登録済みリスト -->
+        <div class="settings-section">
+            <h2 class="settings-title">登録済みリスト</h2>
+            <div class="filter-chips" id="prefecture-filter" style="margin-bottom: 12px;">
+                <button class="filter-chip active" data-pref="all" onclick="filterByPrefecture('all')">すべて</button>
+                <button class="filter-chip" data-pref="滋賀県" onclick="filterByPrefecture('滋賀県')">滋賀県</button>
+                <button class="filter-chip" data-pref="京都府" onclick="filterByPrefecture('京都府')">京都府</button>
+                <button class="filter-chip" data-pref="大阪府" onclick="filterByPrefecture('大阪府')">大阪府</button>
+                <button class="filter-chip" data-pref="兵庫県" onclick="filterByPrefecture('兵庫県')">兵庫県</button>
+                <button class="filter-chip" data-pref="奈良県" onclick="filterByPrefecture('奈良県')">奈良県</button>
+                <button class="filter-chip" data-pref="和歌山県" onclick="filterByPrefecture('和歌山県')">和歌山県</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>自治体名</th>
+                            <th>URL</th>
+                            <th>状態</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="targets-list">
+                        <tr>
+                            <td colspan="4" class="loading">読み込み中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- キーワード一覧 -->
+        <div class="settings-section">
+            <h2 class="settings-title">抽出キーワード</h2>
+            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                <input type="text" id="new-keyword" placeholder="新しいキーワード"
+                    style="flex: 1; padding: 8px; border: 1px solid #E0E0E0; border-radius: 6px;">
+                <button class="btn btn-primary" onclick="addKeyword()" style="padding: 8px 16px;">追加</button>
+            </div>
+            <p id="keyword-message" style="font-size: 0.85rem; margin-bottom: 8px;"></p>
+            <div id="tags-list" class="filter-chips" style="margin-top: 12px;">
+                読み込み中...
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let targets = [];
+        let tags = [];
+        let itemsData = null;
+        let currentPrefectureFilter = 'all';
+
+        // LocalStorageのキー
+        const LS_KEY_PENDING = 'kanko_budget_pending_targets';
+        const LS_KEY_DELETED = 'kanko_budget_deleted_ids';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadData();
+            renderTargets();
+            renderTags();
+        });
+
+        async function loadData() {
+            // エラーハンドリング付きのfetch関数
+            const fetchJson = async (url, defaultValue) => {
+                try {
+                    const res = await fetch(url);
+                    if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
+                    return await res.json();
+                } catch (e) {
+                    console.warn(e);
+                    return defaultValue;
+                }
+            };
+
+            const [serverTargets, serverTags, serverItems] = await Promise.all([
+                fetchJson('data/targets.json', []),
+                fetchJson('data/tags.json', []),
+                fetchJson('data/items.json', { items: [] })
+            ]);
+
+            tags = serverTags;
+            itemsData = serverItems;
+
+            // --- データマージ処理 ---
+            try {
+                // 1. 削除済みIDの読み込み
+                const deletedIds = JSON.parse(localStorage.getItem(LS_KEY_DELETED) || '[]');
+
+                // 2. サーバーデータから削除済みを除外
+                targets = serverTargets.filter(t => !deletedIds.includes(t.id.toString()));
+
+                // 3. 追加待ちデータの読み込み
+                let pendingTargets = JSON.parse(localStorage.getItem(LS_KEY_PENDING) || '[]');
+
+                // 4. マージとクリーンアップ
+                // サーバーに反映されたpendingデータはlocalStorageから削除する
+                const newPendingTargets = [];
+                pendingTargets.forEach(pending => {
+                    const existsInServer = serverTargets.some(t => t.id.toString() === pending.id.toString());
+                    if (!existsInServer) {
+                        // まだサーバーにない -> リストに追加して維持
+                        targets.push(pending);
+                        newPendingTargets.push(pending);
+                    }
+                });
+
+                // localStorageを更新（反映されたものを削除）
+                localStorage.setItem(LS_KEY_PENDING, JSON.stringify(newPendingTargets));
+
+                // 削除済みIDも、サーバーから消えていればlocalStorageから消す（クリーンアップ）
+                const newDeletedIds = deletedIds.filter(delId => serverTargets.some(t => t.id.toString() === delId));
+                localStorage.setItem(LS_KEY_DELETED, JSON.stringify(newDeletedIds));
+
+            } catch (error) {
+                console.error('データ処理中にエラーが発生しました:', error);
+                // エラー時でも最低限サーバーデータは表示する
+                if (!targets || targets.length === 0) targets = serverTargets || [];
+            }
+        }
+
+        function renderTargets() {
+            const tbody = document.getElementById('targets-list');
+
+            if (targets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">登録されている自治体はありません</td></tr>';
+                return;
+            }
+
+            // 府県の順序を定義
+            const prefectureOrder = ["滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"];
+
+            // 府県と市町村のマッピング
+            const prefectureMapping = {
+                "滋賀県": ["滋賀県", "大津市", "彦根市", "長浜市", "近江八幡市", "草津市", "守山市", "栗東市", "甲賀市", "野洲市", "湖南市", "高島市", "東近江市", "米原市"],
+                "京都府": ["京都府", "京都市", "福知山市", "舞鶴市", "綾部市", "宇治市", "宮津市", "亀岡市", "城陽市", "向日市", "長岡京市", "八幡市", "京田辺市", "京丹後市", "南丹市", "木津川市", "京都市観光協会"],
+                "大阪府": ["大阪府", "大阪市", "堺市", "岸和田市", "豊中市", "池田市", "吹田市", "泉大津市", "高槻市", "貝塚市", "守口市", "枚方市", "茨木市", "八尾市", "泉佐野市", "富田林市", "寝屋川市", "河内長野市", "松原市", "大東市", "和泉市", "箕面市", "柏原市", "羽曳野市", "門真市", "摂津市", "高石市", "藤井寺市", "東大阪市", "泉南市", "四條畷市", "交野市", "大阪狭山市", "阪南市"],
+                "兵庫県": ["兵庫県", "神戸市", "姫路市", "尼崎市", "明石市", "西宮市", "洲本市", "芦屋市", "伊丹市", "相生市", "豊岡市", "加古川市", "赤穂市", "西脇市", "宝塚市", "三木市", "高砂市", "川西市", "小野市", "三田市", "加西市", "丹波篠山市", "養父市", "丹波市", "南あわじ市", "朝来市", "淡路市", "宍粟市", "加東市", "たつの市"],
+                "奈良県": ["奈良県", "奈良市", "大和高田市", "大和郡山市", "天理市", "橿原市", "桜井市", "五條市", "御所市", "生駒市", "香芝市", "葛城市", "宇陀市"],
+                "和歌山県": ["和歌山県", "和歌山市", "海南市", "橋本市", "有田市", "御坊市", "田辺市", "新宮市", "紀の川市", "岩出市"]
+            };
+
+            // 市町村から府県を取得する関数
+            function getPrefecture(municipality) {
+                for (const [pref, cities] of Object.entries(prefectureMapping)) {
+                    if (cities.includes(municipality)) {
+                        return pref;
+                    }
+                }
+                return "その他";
+            }
+
+            // スクレイピング済みの自治体およびPending判定
+            const scrapedMunicipalities = new Set();
+            if (itemsData && itemsData.items) {
+                itemsData.items.forEach(item => {
+                    scrapedMunicipalities.add(item.municipality);
+                });
+            }
+
+            // Pending中のアイテムIDを取得
+            const pendingTargets = JSON.parse(localStorage.getItem(LS_KEY_PENDING) || '[]');
+            const pendingIds = new Set(pendingTargets.map(t => t.id.toString()));
+
+            // フィルター適用
+            let filteredTargets = targets;
+            if (currentPrefectureFilter !== 'all') {
+                filteredTargets = targets.filter(target => getPrefecture(target.municipality) === currentPrefectureFilter);
+            }
+
+            if (filteredTargets.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">該当する自治体はありません</td></tr>';
+                return;
+            }
+
+            // 府県ごとにグループ化
+            const grouped = {};
+            prefectureOrder.forEach(pref => grouped[pref] = []);
+            grouped["その他"] = [];
+
+            filteredTargets.forEach(target => {
+                const pref = getPrefecture(target.municipality);
+                if (grouped[pref]) {
+                    grouped[pref].push(target);
+                } else {
+                    grouped["その他"].push(target);
+                }
+            });
+
+            // HTMLを生成
+            let html = '';
+            const prefecturesWithData = currentPrefectureFilter === 'all' ? prefectureOrder : [currentPrefectureFilter];
+
+            prefecturesWithData.forEach(pref => {
+                if (grouped[pref] && grouped[pref].length > 0) {
+                    if (currentPrefectureFilter === 'all') {
+                        html += `<tr><td colspan="4" style="background: #F0F4F8; font-weight: 600; padding: 8px 12px;">${pref}</td></tr>`;
+                    }
+                    grouped[pref].forEach(target => {
+                        const hasData = scrapedMunicipalities.has(target.municipality);
+                        const isPending = pendingIds.has(target.id.toString());
+                        // const isPending = pendingIds.has(target.id.toString()); // No longer used
+
+                        let statusBadge = '';
+                        const checkIcon = '<svg class="status-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+                        // 更新アイコンの線を太く(2.5)
+                        const syncIcon = '<svg class="status-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+                        // const errorIcon = '<svg class="status-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>'; // No longer used
+
+                        if (hasData) {
+                            // スクレイピング結果あり → 成功
+                            statusBadge = `<span class="status-badge status-success">${checkIcon}</span>`;
+                        } else {
+                            // スクレイピング結果なし → 更新中（次回スクレイピングで処理予定）
+                            statusBadge = `<span class="status-badge status-pending" title="次回スクレイピングで処理予定">${syncIcon}</span>`;
+                        }
+
+                        html += `
+                            <tr>
+                                <td${currentPrefectureFilter === 'all' ? ' style="padding-left: 24px;"' : ''}>${target.municipality}</td>
+                                <td><a href="${target.url}" target="_blank">${target.pageTitle || 'リンク'}</a></td>
+                                <td>${statusBadge}</td>
+                                <td>
+                                    <button class="btn btn-danger" onclick="deleteTarget('${target.id}')" style="padding: 4px 12px; font-size: 0.75rem;">削除</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+
+            // その他（すべて表示の場合のみ）
+            if (currentPrefectureFilter === 'all' && grouped["その他"].length > 0) {
+                html += `<tr><td colspan="4" style="background: #F0F4F8; font-weight: 600; padding: 8px 12px;">その他</td></tr>`;
+                grouped["その他"].forEach(target => {
+                    const hasData = scrapedMunicipalities.has(target.municipality);
+                    const isPending = pendingIds.has(target.id.toString());
+
+                    let statusBadge = '';
+                    const checkIcon = '<svg class="status-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+                    const syncIcon = '<svg class="status-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+
+                    if (hasData) {
+                        // スクレイピング結果あり → 成功
+                        statusBadge = `<span class="status-badge status-success">${checkIcon}</span>`;
+                    } else {
+                        // スクレイピング結果なし → 更新中
+                        statusBadge = `<span class="status-badge status-pending" title="次回スクレイピングで処理予定">${syncIcon}</span>`;
+                    }
+
+                    html += `
+                        <tr>
+                            <td style="padding-left: 24px;">${target.municipality}</td>
+                            <td><a href="${target.url}" target="_blank">${target.pageTitle || 'リンク'}</a></td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                <button class="btn btn-danger" onclick="deleteTarget('${target.id}')" style="padding: 4px 12px; font-size: 0.75rem;">削除</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        function filterByPrefecture(pref) {
+            currentPrefectureFilter = pref;
+
+            // フィルターチップのアクティブ状態を更新
+            document.querySelectorAll('#prefecture-filter .filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+                if (chip.dataset.pref === pref) {
+                    chip.classList.add('active');
+                }
+            });
+
+            renderTargets();
+        }
+
+        function renderTags() {
+            const container = document.getElementById('tags-list');
+
+            if (tags.length === 0) {
+                container.innerHTML = 'キーワードが登録されていません';
+                return;
+            }
+
+            container.innerHTML = tags.map(tag => `
+                <span class="filter-chip" style="display: inline-flex; align-items: center; gap: 6px;">
+                    ${tag.tag}
+                    <button onclick="deleteKeyword('${tag.id}')" style="background: none; border: none; cursor: pointer; color: #999; font-size: 14px; padding: 0;">&times;</button>
+                </span>
+            `).join('');
+        }
+
+        // フォーム送信
+        document.getElementById('add-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('municipality-name').value;
+            const url = document.getElementById('target-url').value;
+            const messageEl = document.getElementById('form-message');
+
+            try {
+                // Vercel Serverless Functionを呼び出し
+                const response = await fetch('/api/add-municipality', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ municipality: name, url: url })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    messageEl.style.color = '#059669';
+                    messageEl.textContent = '✅ 登録しました。2〜3分でサーバーに反映されます。';
+                    document.getElementById('add-form').reset();
+
+                    const newTarget = {
+                        id: result.id,
+                        municipality: name,
+                        url: url,
+                        pageTitle: ''
+                    };
+
+                    // UIに即時反映
+                    targets.push(newTarget);
+
+                    // LocalStorageに保存
+                    const pendingTargets = JSON.parse(localStorage.getItem(LS_KEY_PENDING) || '[]');
+                    pendingTargets.push(newTarget);
+                    localStorage.setItem(LS_KEY_PENDING, JSON.stringify(pendingTargets));
+
+                    renderTargets();
+
+                } else {
+                    throw new Error('登録に失敗しました');
+                }
+            } catch (error) {
+                messageEl.style.color = '#DC2626';
+                messageEl.textContent = '❌ ' + error.message;
+            }
+        });
+
+        // モーダル関連
+        let pendingDeleteId = null;
+
+        function showDeleteModal(id, name) {
+            pendingDeleteId = id;
+            document.getElementById('modal-message').textContent = `「${name}」を削除しますか？`;
+            document.getElementById('confirm-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            pendingDeleteId = null;
+            document.getElementById('confirm-modal').classList.remove('active');
+        }
+
+        document.getElementById('modal-confirm-btn').addEventListener('click', async () => {
+            if (!pendingDeleteId) return;
+            const id = pendingDeleteId;
+            closeModal();
+            await executeDelete(id);
+        });
+
+        function deleteTarget(id) {
+            const target = targets.find(t => t.id.toString() === id.toString());
+            const name = target ? target.municipality : '不明';
+            showDeleteModal(id, name);
+        }
+
+        async function executeDelete(id) {
+            try {
+                const response = await fetch('/api/delete-municipality', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+
+                if (response.ok) {
+                    // 成功メッセージをページ内に表示
+                    const msg = document.getElementById('form-message');
+                    msg.style.color = '#059669';
+                    msg.textContent = '✅ 削除しました。2〜3分でサーバーに反映されます。';
+
+                    // UIから即時削除
+                    targets = targets.filter(t => t.id !== id && t.id.toString() !== id.toString());
+
+                    // 削除IDをLocalStorageに保存
+                    const deletedIds = JSON.parse(localStorage.getItem(LS_KEY_DELETED) || '[]');
+                    deletedIds.push(id.toString());
+                    localStorage.setItem(LS_KEY_DELETED, JSON.stringify(deletedIds));
+
+                    // Pendingからも削除
+                    let pendingTargets = JSON.parse(localStorage.getItem(LS_KEY_PENDING) || '[]');
+                    pendingTargets = pendingTargets.filter(t => t.id.toString() !== id.toString());
+                    localStorage.setItem(LS_KEY_PENDING, JSON.stringify(pendingTargets));
+
+                    renderTargets();
+
+                } else {
+                    throw new Error('削除に失敗しました');
+                }
+            } catch (error) {
+                const msg = document.getElementById('form-message');
+                msg.style.color = '#DC2626';
+                msg.textContent = '❌ エラー: ' + error.message;
+            }
+        }
+
+        // キーワード追加
+        async function addKeyword() {
+            const keyword = document.getElementById('new-keyword').value.trim();
+            const messageEl = document.getElementById('keyword-message');
+
+            if (!keyword) {
+                messageEl.style.color = '#DC2626';
+                messageEl.textContent = '❌ キーワードを入力してください';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/add-keyword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyword: keyword })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    messageEl.style.color = '#059669';
+                    messageEl.textContent = '✅ キーワードを追加しました。2〜3分でサーバーに反映されます。';
+                    document.getElementById('new-keyword').value = '';
+
+                    // UIに即時反映
+                    tags.push({ id: result.id, tag: keyword, color: '#8B5CF6' });
+                    renderTags();
+
+                    // リロードしても消えないように一旦リロードしてしまう手もあるが、
+                    // キーワードも厳密にやるならLocalStorage管理が必要。
+                    // 今回は要望のあった「自治体リスト」を優先。
+
+                } else {
+                    throw new Error('追加に失敗しました');
+                }
+            } catch (error) {
+                messageEl.style.color = '#DC2626';
+                messageEl.textContent = '❌ ' + error.message;
+            }
+        }
+
+        // キーワード削除
+        async function deleteKeyword(id) {
+            if (!confirm('このキーワードを削除しますか？')) return;
+
+            try {
+                const response = await fetch('/api/delete-keyword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+
+                if (response.ok) {
+                    alert('キーワードを削除しました。2〜3分でサーバーに反映されます。');
+
+                    // UIから即時削除
+                    tags = tags.filter(t => t.id !== id && t.id.toString() !== id.toString());
+                    renderTags();
+
+                } else {
+                    throw new Error('削除に失敗しました');
+                }
+            } catch (error) {
+                alert('エラー: ' + error.message);
+            }
+        }
+    </script>
+</body>
+
+</html>
