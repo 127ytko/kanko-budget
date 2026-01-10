@@ -1,1 +1,6 @@
 .vercel
+temp-*/
+__pycache__/
+*.pyc
+.venv/
+scraper_log.txt
