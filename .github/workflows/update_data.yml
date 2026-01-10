@@ -1,0 +1,37 @@
+name: Update Data JSONs
+
+on:
+  push:
+    paths:
+      - 'target_urls.csv'
+      - 'tags.csv'
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas
+
+    - name: Convert CSV to JSON
+      run: |
+        cd static-site
+        python scripts/convert_to_json.py
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add static-site/data/*.json
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update JSON data from CSV changes" && git pull --rebase origin main && git push)
