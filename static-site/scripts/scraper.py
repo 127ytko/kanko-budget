@@ -339,6 +339,21 @@ def scrape_budget_pages(municipality: dict, max_depth: int = 3) -> list:
     
     urls_to_visit = [(url, 0) for url in municipality['start_urls']]
     
+    # [追加] 開始URL自体も対象ページかチェック（京都市観光協会などのリストページ対策）
+    for start_url in municipality['start_urls']:
+        try:
+            # ページ情報を取得
+            page_info = get_page_details(start_url, municipality['base_url'])
+            if page_info and len(page_info['pdfs']) > 0:
+                # PDFが含まれていれば、開始ページ自体も候補とする
+                # ただしタイトル条件は緩める（「情報公開」などは予算キーワードでない場合があるため）
+                # ここでは「PDFがある」ことを強いシグナルとする
+                logger.info(f"  📄 開始ページを候補として追加: {page_info['title']} -> {start_url}")
+                budget_pages.append(page_info)
+                visited.add(start_url) # 訪問済みに追加して、ループ内での再取得を防ぐ
+        except Exception as e:
+            logger.warning(f"開始ページの評価に失敗: {e}")
+
     while urls_to_visit:
         current_url, depth = urls_to_visit.pop(0)
         
