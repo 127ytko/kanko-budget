@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // データ読み込み
 async function loadData() {
     try {
-        const response = await fetch('data/items.json');
+        const response = await fetch(`data/items.json?t=${new Date().getTime()}`);
         data = await response.json();
     } catch (error) {
         console.error('データの読み込みに失敗しました:', error);
