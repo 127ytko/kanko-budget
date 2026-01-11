@@ -1,5 +1,23 @@
 [
   {
+    "id": "1",
+    "municipality": "滋賀県",
+    "url": "https://www.pref.shiga.lg.jp/kensei/zaiseikaikei/yosan/",
+    "pageTitle": "予算・財政｜滋賀県ホームページ"
+  },
+  {
+    "id": "2",
+    "municipality": "大津市",
+    "url": "https://www.city.otsu.lg.jp/soshiki/005/1207/g/zaisei/index.html",
+    "pageTitle": "財政／大津市"
+  },
+  {
+    "id": "3",
+    "municipality": "長浜市",
+    "url": "https://www.city.nagahama.lg.jp/category/5-10-1-0-0-0-0-0-0-0.html",
+    "pageTitle": "予算・決算等 | 長浜市"
+  },
+  {
     "id": "4",
     "municipality": "京都市",
     "url": "https://www.city.kyoto.lg.jp/gyozai/category/176-0-0-0-0-0-0-0-0-0.html",
@@ -12,10 +30,22 @@
     "pageTitle": "京都市観光協会ディスクロージャー"
   },
   {
+    "id": "6",
+    "municipality": "宮津市",
+    "url": "https://www.city.miyazu.kyoto.jp/soshiki/4/",
+    "pageTitle": "宮津市財政"
+  },
+  {
     "id": "7",
     "municipality": "京丹後市",
     "url": "https://www.city.kyotango.lg.jp/top/soshiki/somu/zaisei/7/index.html",
     "pageTitle": "予算概要／京丹後市"
+  },
+  {
+    "id": "8",
+    "municipality": "奈良市",
+    "url": "https://www.city.nara.lg.jp/site/zaisei/",
+    "pageTitle": "奈良市財政課"
   },
   {
     "id": "9",
