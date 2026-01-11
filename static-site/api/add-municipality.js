@@ -42,8 +42,8 @@ module.exports = async function handler(req, res) {
                     headers: {
                         'Authorization': `token ${GITHUB_TOKEN}`,
                         'Accept': 'application/vnd.github.v3+json',
-                         // キャッシュを防ぐためにタイムスタンプを追加
-                         'If-None-Match': '' 
+                        // キャッシュを防ぐためにタイムスタンプを追加
+                        'If-None-Match': ''
                     }
                 }
             );
@@ -55,20 +55,47 @@ module.exports = async function handler(req, res) {
             const fileData = await getFileResponse.json();
             const currentContent = Buffer.from(fileData.content, 'base64').toString('utf-8');
 
-            // 新しいIDを生成（既存の最大ID + 1）
+            // 既存の行を解析
             const lines = currentContent.trim().split('\n');
+            const header = lines[0];
             let maxId = 0;
+            let existingIndex = -1;
+            let existingId = null;
+
             for (let i = 1; i < lines.length; i++) {
-                const id = parseInt(lines[i].split(',')[0], 10);
+                const parts = lines[i].split(',');
+                const id = parseInt(parts[0].replace(/"/g, ''), 10);
+                const name = parts[1] ? parts[1].replace(/"/g, '').trim() : '';
+
                 if (!isNaN(id) && id > maxId) {
                     maxId = id;
                 }
-            }
-            const newId = maxId + 1;
 
-            // 新しい行を追加
-            const newLine = `\n${newId},"${municipality}","${url}","",""`;
-            const newContent = currentContent.trimEnd() + newLine;
+                // 同名の自治体が存在するかチェック
+                if (name === municipality) {
+                    existingIndex = i;
+                    existingId = id;
+                }
+            }
+
+            let newContent;
+            let actionMessage;
+            let resultId;
+
+            if (existingIndex !== -1) {
+                // 既存の自治体のURLを更新
+                lines[existingIndex] = `${existingId},"${municipality}","${url}","",""`;
+                newContent = lines.join('\n');
+                actionMessage = `🔄 自治体更新: ${municipality}`;
+                resultId = existingId;
+            } else {
+                // 新しい自治体を追加
+                const newId = maxId + 1;
+                const newLine = `\n${newId},"${municipality}","${url}","",""`;
+                newContent = currentContent.trimEnd() + newLine;
+                actionMessage = `➕ 自治体追加: ${municipality}`;
+                resultId = newId;
+            }
 
             // ファイルを更新
             const updateResponse = await fetch(
@@ -81,7 +108,7 @@ module.exports = async function handler(req, res) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        message: `➕ 自治体追加: ${municipality}`,
+                        message: actionMessage,
                         content: Buffer.from(newContent).toString('base64'),
                         sha: fileData.sha
                     })
@@ -101,10 +128,12 @@ module.exports = async function handler(req, res) {
                 throw new Error(errorData.message || '更新に失敗しました');
             }
 
+            const isUpdate = existingIndex !== -1;
             return res.status(200).json({
                 success: true,
-                message: `${municipality}を登録しました`,
-                id: newId
+                message: isUpdate ? `${municipality}のURLを更新しました` : `${municipality}を登録しました`,
+                id: resultId,
+                updated: isUpdate
             });
 
         } catch (error) {
