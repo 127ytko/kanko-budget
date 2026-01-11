@@ -6,6 +6,7 @@ CSVデータをJSON形式に変換するスクリプト
 import csv
 import json
 import os
+import hashlib
 from datetime import datetime
 
 # パス設定
@@ -124,7 +125,7 @@ def convert_items():
                     prefecture_municipalities[prefecture].add(municipality)
                 
                 items.append({
-                    'id': i,
+                    'id': hashlib.md5(row.get('Page_URL', '').encode()).hexdigest()[:8],
                     'date': row.get('Detected_Date', ''),
                     'municipality': municipality,
                     'prefecture': prefecture or '',
