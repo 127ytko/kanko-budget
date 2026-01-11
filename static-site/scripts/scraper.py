@@ -24,8 +24,9 @@ import io
 import os
 import sys
 import logging
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from urllib.parse import urljoin, urlparse
+import hashlib
 from bs4 import BeautifulSoup
 
 # pdfminer.sixを使用
@@ -136,43 +137,72 @@ ALL_KEYWORDS = TOURISM_KEYWORDS + INFLATION_KEYWORDS
 
 
 # ============================================
-# 履歴管理機能（差分取得用）
+# 履歴管理機能（ハッシュ比較による更新検知）
 # ============================================
 
-def load_history() -> set:
-    """処理済みURLの履歴を読み込む"""
-    processed_urls = set()
+# 日本時間（JST）
+JST = timezone(timedelta(hours=9))
+
+def get_jst_now() -> datetime:
+    """現在の日本時間を取得"""
+    return datetime.now(JST)
+
+
+def calculate_page_hash(page_info: dict) -> str:
+    """
+    ページ内容のハッシュを計算する
+    タイトル、PDF数、PDFリストを元に変更を検知
+    """
+    content = f"{page_info.get('title', '')}"
+    content += f"_{len(page_info.get('pdfs', []))}"
+    for pdf in page_info.get('pdfs', []):
+        content += f"_{pdf.get('url', '')}"
+    return hashlib.md5(content.encode('utf-8')).hexdigest()
+
+
+def load_history() -> dict:
+    """
+    処理済みURLの履歴を読み込む（ハッシュ比較版）
+    戻り値: {URL: {'hash': ハッシュ値, 'date': 検出日}}
+    """
+    history = {}
     
     if os.path.exists(HISTORY_FILE):
         try:
             with open(HISTORY_FILE, 'r', encoding='utf-8-sig') as f:
-                reader = csv.reader(f)
-                next(reader, None)  # ヘッダーをスキップ
+                reader = csv.DictReader(f)
                 for row in reader:
-                    if row and len(row) >= 1:
-                        processed_urls.add(row[0])
-            logger.info(f"📋 履歴ファイル読み込み完了: {len(processed_urls)}件の処理済みURL")
+                    if row.get('URL'):
+                        history[row['URL']] = {
+                            'hash': row.get('Hash', ''),
+                            'date': row.get('Detected_Date', '')
+                        }
+            logger.info(f"📋 履歴ファイル読み込み完了: {len(history)}件の処理済みURL")
         except Exception as e:
             logger.warning(f"履歴ファイル読み込みエラー: {e}")
     else:
         logger.info("📋 履歴ファイルが存在しません。新規作成します。")
     
-    return processed_urls
+    return history
 
 
-def add_to_history(url: str, processed_urls: set):
-    """URLを履歴に追加する（追記モード）"""
-    processed_urls.add(url)
-    
-    file_exists = os.path.exists(HISTORY_FILE)
+def save_history(history: dict):
+    """
+    履歴ファイルを上書き保存する
+    """
     try:
-        with open(HISTORY_FILE, 'a', newline='', encoding='utf-8-sig') as f:
-            writer = csv.writer(f)
-            if not file_exists:
-                writer.writerow(['URL'])
-            writer.writerow([url])
+        with open(HISTORY_FILE, 'w', newline='', encoding='utf-8-sig') as f:
+            writer = csv.DictWriter(f, fieldnames=['URL', 'Hash', 'Detected_Date'])
+            writer.writeheader()
+            for url, data in history.items():
+                writer.writerow({
+                    'URL': url,
+                    'Hash': data.get('hash', ''),
+                    'Detected_Date': data.get('date', '')
+                })
+        logger.info(f"📋 履歴ファイル保存完了: {len(history)}件")
     except Exception as e:
-        logger.error(f"履歴追記エラー: {e}")
+        logger.error(f"履歴ファイル保存エラー: {e}")
 
 
 def append_to_output_csv(result: dict):
@@ -540,10 +570,10 @@ def analyze_page(page_info: dict, municipality_name: str) -> dict:
 # ============================================
 
 def main():
-    """メイン処理（ページベース版）"""
+    """メイン処理（ページベース版・ハッシュ比較による更新検知）"""
     logger.info("=" * 70)
     logger.info("自治体予算情報スクレイピング・分析スクリプト（ページベース版）開始")
-    logger.info("【差分取得モード】処理済みURLはスキップします")
+    logger.info("【ハッシュ比較モード】ページ内容の変更を検知します")
     logger.info("=" * 70)
     logger.info(f"対象年度: {', '.join(TARGET_YEARS)}")
     logger.info(f"観光キーワード数: {len(TOURISM_KEYWORDS)}件")
@@ -556,10 +586,13 @@ def main():
     
     logger.info(f"スクレイピング対象: {', '.join([m['name'] for m in municipalities])}")
     
-    processed_urls = load_history()
+    # 履歴を読み込み（ハッシュ比較用）
+    history = load_history()
     
     new_results = []
-    skipped_count = 0
+    updated_results = []
+    unchanged_count = 0
+    all_results = []  # 全ての結果（CSV再生成用）
     
     for municipality in municipalities:
         try:
@@ -573,23 +606,49 @@ def main():
             # 各ページを分析
             for page_info in budget_pages:
                 page_url = page_info['url']
+                current_hash = calculate_page_hash(page_info)
                 
-                # 処理済みチェック
-                if page_url in processed_urls:
-                    logger.info(f"[SKIP] Already processed: {page_info['title']}")
-                    skipped_count += 1
-                    continue
-                
-                logger.info(f"\n--- [NEW] {municipality['name']} ページ分析: {page_info['title']} ---")
-                
-                result = analyze_page(page_info, municipality['name'])
-                new_results.append(result)
-                
-                # 結果をCSVに追記
-                append_to_output_csv(result)
-                
-                # 履歴に追加
-                add_to_history(page_url, processed_urls)
+                # 履歴と比較
+                if page_url in history:
+                    old_data = history[page_url]
+                    old_hash = old_data.get('hash', '')
+                    old_date = old_data.get('date', '')
+                    
+                    if current_hash == old_hash:
+                        # ハッシュが同じ = 変更なし → 前回の日付を維持
+                        logger.info(f"[UNCHANGED] {page_info['title']}")
+                        unchanged_count += 1
+                        
+                        # 前回のデータを流用（日付は変えない）
+                        result = analyze_page(page_info, municipality['name'])
+                        result['Detected_Date'] = old_date  # 前回の日付を維持
+                        all_results.append(result)
+                        
+                        # 履歴を更新（ハッシュは同じだが念のため）
+                        history[page_url] = {'hash': current_hash, 'date': old_date}
+                        continue
+                    else:
+                        # ハッシュが異なる = 更新あり → 新しい日付
+                        logger.info(f"\n--- [UPDATED] {municipality['name']} ページ更新検知: {page_info['title']} ---")
+                        
+                        result = analyze_page(page_info, municipality['name'])
+                        result['Detected_Date'] = get_jst_now().strftime('%Y/%m/%d')
+                        updated_results.append(result)
+                        all_results.append(result)
+                        
+                        # 履歴を更新
+                        history[page_url] = {'hash': current_hash, 'date': result['Detected_Date']}
+                else:
+                    # 新規ページ
+                    logger.info(f"\n--- [NEW] {municipality['name']} 新規ページ: {page_info['title']} ---")
+                    
+                    result = analyze_page(page_info, municipality['name'])
+                    result['Detected_Date'] = get_jst_now().strftime('%Y/%m/%d')
+                    new_results.append(result)
+                    all_results.append(result)
+                    
+                    # 履歴に追加
+                    history[page_url] = {'hash': current_hash, 'date': result['Detected_Date']}
                 
                 time.sleep(1)
                 
@@ -597,35 +656,54 @@ def main():
             logger.error(f"{municipality['name']} の処理中にエラーが発生: {e}")
             continue
     
+    # CSVを全件で上書き保存（重複防止）
+    if all_results:
+        columns = ['Detected_Date', 'Municipality', 'Title', 'Page_URL', 
+                   'Has_Tourism_Keyword', 'Has_Inflation_Keyword', 'Excerpt_Summary']
+        try:
+            with open(OUTPUT_FILE, 'w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.DictWriter(f, fieldnames=columns)
+                writer.writeheader()
+                for result in all_results:
+                    writer.writerow(result)
+            logger.info(f"📊 結果CSV保存完了: {len(all_results)}件")
+        except Exception as e:
+            logger.error(f"結果CSV保存エラー: {e}")
+    
+    # 履歴を保存
+    save_history(history)
+    
     # サマリー出力
     logger.info("\n" + "=" * 70)
     logger.info("処理結果サマリー")
     logger.info("=" * 70)
-    logger.info(f"📊 スキップ（処理済み）: {skipped_count}件")
-    logger.info(f"🆕 新規処理: {len(new_results)}件")
+    logger.info(f"📊 変更なし: {unchanged_count}件")
+    logger.info(f"🔄 更新検知: {len(updated_results)}件")
+    logger.info(f"🆕 新規検出: {len(new_results)}件")
     
-    if new_results:
-        tourism_count = sum(1 for r in new_results if r['Has_Tourism_Keyword'] == 'TRUE')
-        inflation_count = sum(1 for r in new_results if r['Has_Inflation_Keyword'] == 'TRUE')
+    changed_results = new_results + updated_results
+    if changed_results:
+        tourism_count = sum(1 for r in changed_results if r['Has_Tourism_Keyword'] == 'TRUE')
+        inflation_count = sum(1 for r in changed_results if r['Has_Inflation_Keyword'] == 'TRUE')
         logger.info(f"   ├─ 観光関連キーワード含有: {tourism_count}件")
         logger.info(f"   └─ 物価高騰関連キーワード含有: {inflation_count}件")
         
-        logger.info("\n📋 新規検出ページ:")
-        for r in new_results:
+        logger.info("\n📋 新規/更新ページ:")
+        for r in changed_results:
             kw_flag = "✓" if r['Has_Tourism_Keyword'] == 'TRUE' else "-"
             logger.info(f"   [{kw_flag}] {r['Municipality']}: {r['Title']}")
     else:
-        logger.info("   → 新着ページはありませんでした")
+        logger.info("   → 新着・更新ページはありませんでした")
     
     logger.info("\n" + "=" * 70)
     logger.info("処理完了")
     logger.info("=" * 70)
     
-    # 最終更新日時を保存
+    # 最終更新日時を保存（日本時間）
     try:
         with open(LAST_UPDATED_FILE, 'w', encoding='utf-8') as f:
-            f.write(datetime.now().strftime('%Y-%m-%d %H:%M'))
-        logger.info("📅 最終更新日時を保存しました")
+            f.write(get_jst_now().strftime('%Y-%m-%d %H:%M'))
+        logger.info("📅 最終更新日時を保存しました（JST）")
     except Exception as e:
         logger.error(f"最終更新日時の保存に失敗: {e}")
     
@@ -640,7 +718,7 @@ def main():
     except Exception as e:
         logger.error(f"JSON変換実行エラー: {e}")
     
-    return new_results
+    return changed_results
 
 
 if __name__ == "__main__":
