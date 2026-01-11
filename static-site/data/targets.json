@@ -58,5 +58,11 @@
     "municipality": "京都府",
     "url": "https://www.pref.kyoto.jp/yosan/",
     "pageTitle": ""
+  },
+  {
+    "id": "11",
+    "municipality": "兵庫県",
+    "url": "https://web.pref.hyogo.lg.jp/kk20/pa02_000000112.html",
+    "pageTitle": ""
   }
 ]
