@@ -52,5 +52,11 @@
     "municipality": "奈良県",
     "url": "https://www.pref.nara.jp/13393.htm",
     "pageTitle": "奈良県財政課"
+  },
+  {
+    "id": "10",
+    "municipality": "京都府",
+    "url": "https://www.pref.kyoto.jp/yosan/",
+    "pageTitle": ""
   }
 ]
