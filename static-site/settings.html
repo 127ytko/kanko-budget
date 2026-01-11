@@ -247,8 +247,57 @@
                 }
             };
 
+            // GitHub から直接 target_urls.csv を取得（リアルタイム反映）
+            const fetchTargetsFromGitHub = async () => {
+                try {
+                    const timestamp = new Date().getTime(); // キャッシュ回避
+                    const res = await fetch(`https://raw.githubusercontent.com/127ytko/kanko-budget/main/target_urls.csv?t=${timestamp}`);
+                    if (!res.ok) throw new Error('Failed to fetch CSV from GitHub');
+                    const csvText = await res.text();
+
+                    // CSV をパース
+                    const lines = csvText.trim().split('\n');
+                    const targets = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        // CSV パース（ダブルクォート対応）
+                        const parts = [];
+                        let current = '';
+                        let inQuotes = false;
+                        for (let j = 0; j < line.length; j++) {
+                            const char = line[j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                parts.push(current.trim());
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        parts.push(current.trim());
+
+                        if (parts.length >= 3 && parts[0]) {
+                            targets.push({
+                                id: parts[0],
+                                municipality: parts[1] || '',
+                                url: parts[2] || '',
+                                pageTitle: parts[4] || '' // Page_Title列
+                            });
+                        }
+                    }
+                    console.log('✅ GitHub から最新のターゲット一覧を取得:', targets.length, '件');
+                    return targets;
+                } catch (e) {
+                    console.warn('GitHub からの取得に失敗、ローカルJSONにフォールバック:', e);
+                    return await fetchJson('data/targets.json', []);
+                }
+            };
+
             const [serverTargets, serverTags, serverItems] = await Promise.all([
-                fetchJson('data/targets.json', []),
+                fetchTargetsFromGitHub(),
                 fetchJson('data/tags.json', []),
                 fetchJson('data/items.json', { items: [] })
             ]);
