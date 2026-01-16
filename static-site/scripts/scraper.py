@@ -54,7 +54,12 @@ OUTPUT_FILE = os.path.join(ROOT_DIR, 'multi_municipality_budget_analysis.csv')  
 LAST_UPDATED_FILE = os.path.join(ROOT_DIR, 'last_updated.txt')  # 最終更新日時ファイル
 
 # 定数設定（2025年以降のみ対象）
-TARGET_YEARS = ['令和7年度', '令和8年度', '令和9年度', 'R7', 'R8', 'R9', '2025', '2026', '2027']
+# 全角数字版も追加（兵庫県、南あわじ市など全角数字を使用するサイト対応）
+TARGET_YEARS = [
+    '令和7年度', '令和8年度', '令和9年度',  # 半角数字
+    '令和７年度', '令和８年度', '令和９年度',  # 全角数字
+    'R7', 'R8', 'R9', '2025', '2026', '2027'
+]
 MIN_YEAR = 2025  # これ以前の年度はスキップ
 BUDGET_KEYWORDS = ['予算', '補正', '当初', '概要', '方針', '要領', '決算']
 
@@ -186,6 +191,18 @@ def load_history() -> dict:
     return history
 
 
+def debug_print_history_sample(history):
+    """履歴データのサンプルを表示（デバッグ用）"""
+    if not history:
+        logger.info("履歴データは空です")
+        return
+    
+    sample_key = next(iter(history))
+    sample_val = history[sample_key]
+    logger.info(f"履歴データサンプル: key={sample_key}, type={type(sample_val)}, val={sample_val}")
+
+
+
 def save_history(history: dict):
     """
     履歴ファイルを上書き保存する
@@ -301,10 +318,14 @@ def extract_keyword_context(text: str, keyword: str, context_length: int = 50) -
 # ページスクレイピング関連
 # ============================================
 
-# 除外する過去の年度パターン
+# 除外する過去の年度パターン（全角数字版も追加）
 EXCLUDE_YEARS = [
-    '平成', 'H2', 'H3', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024',
+    '平成', 'H2', 'H3', 
+    '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024',
+    # 半角数字版
     '令和元年', '令和2年', '令和3年', '令和4年', '令和5年', '令和6年',
+    # 全角数字版
+    '令和２年', '令和３年', '令和４年', '令和５年', '令和６年',
     'R1', 'R2', 'R3', 'R4', 'R5', 'R6'
 ]
 
@@ -337,12 +358,22 @@ def get_page_title(soup: BeautifulSoup) -> str:
     """ページタイトルを取得"""
     # <title>タグから取得
     if soup.title and soup.title.string:
-        title = soup.title.string.strip()
-        # サイト名を除去（「｜」や「|」以降を削除）
+        full_title = soup.title.string.strip()
+        
+        # セパレータで分割し、予算キーワードを含む部分を優先して取得
+        # 兵庫県のように「サイト名／ページタイトル」の形式にも対応
         for sep in ['｜', '|', ' - ', '／']:
-            if sep in title:
-                title = title.split(sep)[0].strip()
-        return title
+            if sep in full_title:
+                parts = [p.strip() for p in full_title.split(sep)]
+                # 予算キーワードを含む部分を探す
+                for part in parts:
+                    for keyword in BUDGET_KEYWORDS:
+                        if keyword in part:
+                            return part
+                # 予算キーワードがどこにもなければ最初の部分を返す
+                return parts[0]
+        
+        return full_title
     
     # <h1>タグから取得
     h1 = soup.find('h1')
@@ -588,6 +619,7 @@ def main():
     
     # 履歴を読み込み（ハッシュ比較用）
     history = load_history()
+    debug_print_history_sample(history)
     
     new_results = []
     updated_results = []
@@ -611,8 +643,15 @@ def main():
                 # 履歴と比較
                 if page_url in history:
                     old_data = history[page_url]
-                    old_hash = old_data.get('hash', '')
-                    old_date = old_data.get('date', '')
+                    
+                    # データ型チェック（不正データ対策）
+                    if not isinstance(old_data, dict):
+                        logger.warning(f"履歴データ不正 (Str): {page_url} -> {old_data}")
+                        old_hash = ""
+                        old_date = ""
+                    else:
+                        old_hash = old_data.get('hash', '')
+                        old_date = old_data.get('date', '')
                     
                     if current_hash == old_hash:
                         # ハッシュが同じ = 変更なし → 前回の日付を維持
@@ -621,11 +660,18 @@ def main():
                         
                         # 前回のデータを流用（日付は変えない）
                         result = analyze_page(page_info, municipality['name'])
-                        result['Detected_Date'] = old_date  # 前回の日付を維持
+                        
+                        # 型チェック（安全策）
+                        if isinstance(old_data, dict):
+                            result['Detected_Date'] = old_data.get('date', '')
+                        else:
+                            logger.warn(f"履歴データの形式不正 (key={page_url}): {type(old_data)} -> {old_data}")
+                            result['Detected_Date'] = get_jst_now().strftime('%Y/%m/%d')
+                            
                         all_results.append(result)
                         
                         # 履歴を更新（ハッシュは同じだが念のため）
-                        history[page_url] = {'hash': current_hash, 'date': old_date}
+                        history[page_url] = {'hash': current_hash, 'date': result['Detected_Date']}
                         continue
                     else:
                         # ハッシュが異なる = 更新あり → 新しい日付
