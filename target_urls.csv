@@ -1,4 +1,4 @@
-ID,Municipality,Target_URL,Note,Page_Title
+﻿ID,Municipality,Target_URL,Note,Page_Title
 1,滋賀県,https://www.pref.shiga.lg.jp/kensei/zaiseikaikei/yosan/,予算トップページ,予算・財政｜滋賀県ホームページ
 2,大津市,https://www.city.otsu.lg.jp/soshiki/005/1207/g/zaisei/index.html,財政課トップ,財政／大津市
 3,長浜市,https://www.city.nagahama.lg.jp/category/5-10-1-0-0-0-0-0-0-0.html,記事一覧ページ,予算・決算等 | 長浜市
@@ -8,6 +8,6 @@ ID,Municipality,Target_URL,Note,Page_Title
 7,京丹後市,https://www.city.kyotango.lg.jp/top/soshiki/somu/zaisei/7/index.html,予算概要,予算概要／京丹後市
 8,奈良市,https://www.city.nara.lg.jp/site/zaisei/,財政課トップ,奈良市財政課
 9,奈良県,https://www.pref.nara.jp/13393.htm,財政課（新しいURL）,奈良県財政課
-10,"京都府","https://www.pref.kyoto.jp/yosan/","",""
-11,"兵庫県","https://web.pref.hyogo.lg.jp/kk20/pa02_000000112.html","",""
-12,"南あわじ市","https://www.city.minamiawaji.hyogo.jp/site/sub-site-zaimu/list140-186.html","",""
+10,京都府,https://www.pref.kyoto.jp/yosan/,,京都府予算の概要／京都府ホームページ
+11,兵庫県,https://web.pref.hyogo.lg.jp/kk20/pa02_000000112.html,,兵庫県／予算の概要
+12,南あわじ市,https://www.city.minamiawaji.hyogo.jp/site/sub-site-zaimu/list140-186.html,,予算 - 予算・決算 - 南あわじ市ホームページ
