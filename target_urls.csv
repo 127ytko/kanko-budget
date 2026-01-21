@@ -1,4 +1,4 @@
-﻿ID,Municipality,Target_URL,Note,Page_Title
+ID,Municipality,Target_URL,Note,Page_Title
 1,滋賀県,https://www.pref.shiga.lg.jp/kensei/zaiseikaikei/yosan/,予算トップページ,予算・財政｜滋賀県ホームページ
 2,大津市,https://www.city.otsu.lg.jp/soshiki/005/1207/g/zaisei/index.html,財政課トップ,財政／大津市
 3,長浜市,https://www.city.nagahama.lg.jp/category/5-10-1-0-0-0-0-0-0-0.html,記事一覧ページ,予算・決算等 | 長浜市
@@ -11,3 +11,6 @@
 10,京都府,https://www.pref.kyoto.jp/yosan/,,京都府予算の概要／京都府ホームページ
 11,兵庫県,https://web.pref.hyogo.lg.jp/kk20/pa02_000000112.html,,兵庫県／予算の概要
 12,南あわじ市,https://www.city.minamiawaji.hyogo.jp/site/sub-site-zaimu/list140-186.html,,予算 - 予算・決算 - 南あわじ市ホームページ
+13,"和歌山県","https://www.pref.wakayama.lg.jp/prefg/010400/yosan/gaiyou.html","",""
+14,"和歌山市","https://www.city.wakayama.wakayama.jp/shisei/zaisei/1033880/index.html","",""
+15,"白浜町","https://www.town.shirahama.wakayama.jp/soshiki/somu/zaisei/gyomu/zausei_joukyo/1450338309144.html","",""
