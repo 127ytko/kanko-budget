@@ -161,7 +161,7 @@ def calculate_page_hash(page_info: dict) -> str:
     content = f"{page_info.get('title', '')}"
     content += f"_{len(page_info.get('pdfs', []))}"
     for pdf in page_info.get('pdfs', []):
-        content += f"_{pdf.get('url', '')}"
+        content += f"_{pdf}"
     return hashlib.md5(content.encode('utf-8')).hexdigest()
 
 
@@ -699,7 +699,9 @@ def main():
                 time.sleep(1)
                 
         except Exception as e:
+            import traceback
             logger.error(f"{municipality['name']} の処理中にエラーが発生: {e}")
+            logger.error(traceback.format_exc())
             continue
     
     # CSVを全件で上書き保存（重複防止）

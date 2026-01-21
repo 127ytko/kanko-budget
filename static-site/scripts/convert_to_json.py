@@ -77,7 +77,7 @@ def convert_targets():
     output_path = os.path.join(DATA_DIR, 'targets.json')
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(targets, f, ensure_ascii=False, indent=2)
-    print(f"✅ targets.json 作成: {len(targets)}件")
+    print(f"[OK] targets.json 作成: {len(targets)}件")
 
 def convert_tags():
     """tags.csv → tags.json"""
@@ -96,7 +96,7 @@ def convert_tags():
     output_path = os.path.join(DATA_DIR, 'tags.json')
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(tags, f, ensure_ascii=False, indent=2)
-    print(f"✅ tags.json 作成: {len(tags)}件")
+    print(f"[OK] tags.json 作成: {len(tags)}件")
 
 def convert_items():
     """multi_municipality_budget_analysis.csv → items.json"""
@@ -159,7 +159,7 @@ def convert_items():
     output_path = os.path.join(DATA_DIR, 'items.json')
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-    print(f"✅ items.json 作成: {len(items)}件")
+    print(f"[OK] items.json 作成: {len(items)}件")
 
 def main():
     print("=" * 50)
