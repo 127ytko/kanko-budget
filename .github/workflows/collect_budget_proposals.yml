@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 gspread google-generativeai python-dotenv pdfminer.six
+          pip install requests beautifulsoup4 gspread google-genai python-dotenv pdfminer.six
 
       - name: Write service account JSON
         run: |
