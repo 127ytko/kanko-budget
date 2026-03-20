@@ -35,7 +35,7 @@
   5. すべてスプレッドシートに保存
 
 必要ライブラリ:
-  pip install requests beautifulsoup4 gspread google-generativeai python-dotenv pdfminer.six
+  pip install requests beautifulsoup4 gspread google-genai python-dotenv pdfminer.six
 """
 
 import hashlib
@@ -50,7 +50,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 import gspread
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 # ─────────────────────────────────────────────
@@ -62,8 +62,7 @@ GEMINI_API_KEY   = os.getenv("GEMINI_API_KEY")
 SERVICE_ACCOUNT  = os.getenv("SERVICE_ACCOUNT_FILE", "/tmp/service_account.json")
 SPREADSHEET_NAME = os.getenv("SPREADSHEET_NAME", "budget-proposal-collector")
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+_gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 HEADERS = {
     "User-Agent": (
@@ -423,8 +422,7 @@ def summarize_with_gemini(link_text: str, url: str, municipality: str,
                 continue
             for attempt in range(3):
                 try:
-                    model    = genai.GenerativeModel(model_name)
-                    response = model.generate_content(prompt)
+                    response = _gemini_client.models.generate_content(model=model_name, contents=prompt)
                     raw      = response.text.strip().replace("**", "").replace("*", "")
                     return _parse_gemini_output(raw, link_text, include_summary=False)
                 except Exception as e:
